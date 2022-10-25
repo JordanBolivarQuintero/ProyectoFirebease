@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "750010412236",
+    "firebase_url": "https://proyecto1distribuidos-default-rtdb.firebaseio.com",
+    "project_id": "proyecto1distribuidos",
+    "storage_bucket": "proyecto1distribuidos.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:750010412236:android:c19b4b9934ccf4d97ca669",
+        "android_client_info": {
+          "package_name": "com.proyecto.FirebaseDistribuidos"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "750010412236-ob6082ttth3kgmfm13bbm06f3ui2lgf9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLti5IKXZVSDhwAZiXVXk5ScNPr7bpEo4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "750010412236-ob6082ttth3kgmfm13bbm06f3ui2lgf9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
