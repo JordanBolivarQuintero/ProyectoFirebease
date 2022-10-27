@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Firebase;
 using Firebase.Auth;
@@ -13,9 +15,9 @@ public class AuthManager : MonoBehaviour
     //Firebase variables
     [Header("Firebase")]
     public DependencyStatus dependencyStatus;
-    public FirebaseAuth auth;    
-    public FirebaseUser User;
-    public DatabaseReference DBreference;
+    public static FirebaseAuth auth;    
+    public static FirebaseUser User;
+    public static DatabaseReference DBreference;
 
     //Login variables
     [Header("Login")]
@@ -31,6 +33,17 @@ public class AuthManager : MonoBehaviour
     public TMP_InputField passwordRegisterField;
     public TMP_InputField passwordRegisterVerifyField;
     public TMP_Text warningRegisterText;
+
+    //Register variables
+    [Header("Social")]
+    public TMP_Text info;
+    public Transform onlineParent;
+    public Transform friendsParent;
+    public Transform requestParent;
+    //
+    public GameObject online;
+    public GameObject friends;
+    public GameObject request;
 
     [Header("UserData")]
     [SerializeField] Transform texts;
@@ -52,7 +65,20 @@ public class AuthManager : MonoBehaviour
             }
         });
     }
-
+    private void Start()
+    {
+        if (SceneManager.GetActiveScene().buildIndex == 1)
+        {
+            FirebaseDatabase.DefaultInstance.GetReference("onlineUsers").ValueChanged += LoadOnlineUser;
+        }
+    }
+    private void OnDestroy()
+    {
+        if (SceneManager.GetActiveScene().buildIndex == 1)
+        {
+            FirebaseDatabase.DefaultInstance.GetReference("onlineUsers").ValueChanged -= LoadOnlineUser;
+        }
+    }
     private void InitializeFirebase()
     {
         Debug.Log("Setting up Firebase Auth");
@@ -88,6 +114,7 @@ public class AuthManager : MonoBehaviour
     }
     public void SignOutButton()
     {
+        UpdateStatus(false); //new
         auth.SignOut();
         SceneManager.LoadScene(0);
         /*ClearRegisterFeilds();
@@ -141,6 +168,7 @@ public class AuthManager : MonoBehaviour
                 Debug.LogFormat("User signed in successfully: {0} ({1})", User.DisplayName, User.Email);
                 warningLoginText.text = "";
                 confirmLoginText.text = "Logged In";
+                UpdateStatus(true); //new
                 StartCoroutine(LoadGameScene());
             }
             else
@@ -371,6 +399,99 @@ public class AuthManager : MonoBehaviour
             UIManager.instance.VerfyScreen();
         }
     }
+//--------------------------------------------------------------------------------
+    public void UpdateStatus(bool online)
+    {
+        if (online)
+            StartCoroutine(SetOnline());
+        else
+            StartCoroutine(SetOffline());
+    }
+    IEnumerator SetOnline()
+    {
+        var DBTask = DBreference.Child("onlineUsers").Child(User.UserId).SetValueAsync(User.DisplayName.ToString());
+
+        yield return new WaitUntil(predicate: () => DBTask.IsCompleted);
+
+        if (DBTask.Exception != null)
+        {
+            Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
+        }
+        else
+        {
+            Debug.Log("now you are online");
+        }
+    }
+    IEnumerator SetOffline()
+    {
+        var DBTask = DBreference.Child("onlineUsers").Child(User.UserId).RemoveValueAsync();
+
+        yield return new WaitUntil(predicate: () => DBTask.IsCompleted);
+
+        if (DBTask.Exception != null)
+        {
+            Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
+        }
+        else
+        {
+            Debug.Log("now you are offline");
+        }
+    }
+
+    void LoadOnlineUser(object sender, ValueChangedEventArgs args)
+    {
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+        else {
+            for (int i = 0; i < onlineParent.childCount; i++)
+            {
+                Destroy(onlineParent.GetChild(i).gameObject);
+            }
+
+            Dictionary<string, object> users = (Dictionary<string, object>)args.Snapshot.Value;
+
+            foreach (var item in users)
+            {
+                Debug.Log(item.Value + " is online");
+                if (item.Key == User.UserId)
+                {
+                    GameObject a = Instantiate(online, onlineParent);
+                    a.transform.GetChild(0).gameObject.GetComponent<TMP_Text>().text = item.Value.ToString();
+                    a.transform.GetChild(1).gameObject.SetActive(false);
+                    a.name = item.Key.ToString();
+                }
+                else
+                {
+                    GameObject a = Instantiate(online, onlineParent);
+                    a.transform.GetChild(0).gameObject.GetComponent<TMP_Text>().text = item.Value.ToString();
+                    a.name = item.Key.ToString();
+                }
+            }
+        }
+    }
+
+    /*public void SendRequest(GameObject a)
+    {
+        StartCoroutine(UploadRequest(a.name));
+    }
+    public IEnumerator UploadRequest(string aID)
+    {
+        var DBTask = DBreference.Child("users").Child(aID).Child("requests").Child(User.UserId).SetValueAsync(User.DisplayName.ToString());
+
+        yield return new WaitUntil(predicate: () => DBTask.IsCompleted);
+
+        if (DBTask.Exception != null)
+        {
+            Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
+        }
+        else
+        {
+            Debug.Log("new best score set at data base");
+        }
+    }*/
 }
 
 public class UserData
