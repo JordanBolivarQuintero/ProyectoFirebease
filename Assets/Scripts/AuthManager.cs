@@ -15,7 +15,7 @@ public class AuthManager : MonoBehaviour
     //Firebase variables
     [Header("Firebase")]
     public DependencyStatus dependencyStatus;
-    public static FirebaseAuth auth;    
+    public static FirebaseAuth auth;
     public static FirebaseUser User;
     public static DatabaseReference DBreference;
 
@@ -42,11 +42,12 @@ public class AuthManager : MonoBehaviour
     public Transform requestParent;
     //
     public GameObject online;
-    public GameObject friends;
+    public GameObject friend;
     public GameObject request;
 
     [Header("UserData")]
     [SerializeField] Transform texts;
+    int number = 0;
 
     void Awake()
     {
@@ -70,6 +71,8 @@ public class AuthManager : MonoBehaviour
         if (SceneManager.GetActiveScene().buildIndex == 1)
         {
             FirebaseDatabase.DefaultInstance.GetReference("onlineUsers").ValueChanged += LoadOnlineUser;
+            FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/friends").ValueChanged += LoadFriends;
+            FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/request").ValueChanged += LoadRequest;           
         }
     }
     private void OnDestroy()
@@ -77,6 +80,8 @@ public class AuthManager : MonoBehaviour
         if (SceneManager.GetActiveScene().buildIndex == 1)
         {
             FirebaseDatabase.DefaultInstance.GetReference("onlineUsers").ValueChanged -= LoadOnlineUser;
+            FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/friends").ValueChanged -= LoadFriends;
+            FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/request").ValueChanged -= LoadRequest;
         }
     }
     private void InitializeFirebase()
@@ -192,12 +197,12 @@ public class AuthManager : MonoBehaviour
             //If the username field is blank show a warning
             warningRegisterText.text = "Missing Username";
         }
-        else if(passwordRegisterField.text != passwordRegisterVerifyField.text)
+        else if (passwordRegisterField.text != passwordRegisterVerifyField.text)
         {
             //If the password does not match show a warning
             warningRegisterText.text = "Password Does Not Match!";
         }
-        else 
+        else
         {
             //Call the Firebase auth signin function passing the email and password
             var RegisterTask = auth.CreateUserWithEmailAndPasswordAsync(_email, _password);
@@ -238,7 +243,7 @@ public class AuthManager : MonoBehaviour
                 if (User != null)
                 {
                     //Create a user profile and set the username
-                    UserProfile profile = new UserProfile{DisplayName = _username};
+                    UserProfile profile = new UserProfile { DisplayName = _username };
 
                     //Call the Firebase auth update user profile function passing the profile with the username
                     var ProfileTask = User.UpdateUserProfileAsync(profile);
@@ -309,7 +314,7 @@ public class AuthManager : MonoBehaviour
             Debug.Log("new best score set at data base");
         }
     }
-    
+
     public void GetScoreboardValues()
     {
         StartCoroutine(LoadScoreboardData());
@@ -399,7 +404,7 @@ public class AuthManager : MonoBehaviour
             UIManager.instance.VerfyScreen();
         }
     }
-//--------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------
     public void UpdateStatus(bool online)
     {
         if (online)
@@ -445,7 +450,8 @@ public class AuthManager : MonoBehaviour
             Debug.LogError(args.DatabaseError.Message);
             return;
         }
-        else {
+        else
+        {
             for (int i = 0; i < onlineParent.childCount; i++)
             {
                 Destroy(onlineParent.GetChild(i).gameObject);
@@ -466,6 +472,13 @@ public class AuthManager : MonoBehaviour
                 else
                 {
                     GameObject a = Instantiate(online, onlineParent);
+                    for (int i = 0; i < friendsParent.childCount; i++)
+                    {
+                        if (friendsParent.GetChild(i).name == item.Key)
+                        {
+                            a.transform.GetChild(1).gameObject.SetActive(false);
+                        }
+                    }
                     a.transform.GetChild(0).gameObject.GetComponent<TMP_Text>().text = item.Value.ToString();
                     a.name = item.Key.ToString();
                 }
@@ -473,13 +486,77 @@ public class AuthManager : MonoBehaviour
         }
     }
 
-    /*public void SendRequest(GameObject a)
+    void LoadFriends(object sender, ValueChangedEventArgs args)
     {
-        StartCoroutine(UploadRequest(a.name));
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+        else if (args.Snapshot.Value != null)
+        {
+            for (int i = 0; i < friendsParent.childCount; i++)
+            {
+                Destroy(friendsParent.GetChild(i).gameObject);
+            }
+            Dictionary<string, object> friends_ = (Dictionary<string, object>)args.Snapshot.Value;
+            foreach (var item in friends_)
+            {
+                GameObject a = Instantiate(friend, friendsParent);
+                a.transform.GetChild(0).gameObject.GetComponent<TMP_Text>().text = item.Value.ToString();
+                a.name = item.Key.ToString();
+            }
+        }
+        else
+        {
+            Debug.Log("still null");
+            for (int i = 0; i < friendsParent.childCount; i++)
+            {
+                Destroy(friendsParent.GetChild(i).gameObject);
+            }
+        }
     }
-    public IEnumerator UploadRequest(string aID)
+
+    void LoadRequest(object sender, ValueChangedEventArgs args)
     {
-        var DBTask = DBreference.Child("users").Child(aID).Child("requests").Child(User.UserId).SetValueAsync(User.DisplayName.ToString());
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+        else if (args.Snapshot.Value != null)
+        {
+            for (int i = 0; i < requestParent.childCount; i++)
+            {
+                Destroy(requestParent.GetChild(i).gameObject);
+            }
+
+            Dictionary<string, object> request_ = (Dictionary<string, object>)args.Snapshot.Value;
+
+            foreach (var item in request_)
+            {
+                GameObject a = Instantiate(request, requestParent);
+                a.transform.GetChild(0).gameObject.GetComponent<TMP_Text>().text = item.Value.ToString();
+                a.name = item.Key.ToString();
+            }
+        }
+        else
+        {
+            for (int i = 0; i < requestParent.childCount; i++)
+            {
+                Destroy(requestParent.GetChild(i).gameObject);
+            }
+        }
+    }
+
+    //find friends
+    public void SerchButton()
+    {
+        StartCoroutine(JointRoom(number));
+    }
+    IEnumerator JointRoom(int number)
+    {
+        var DBTask = DBreference.Child("rooms").Child("room" + number).Child(User.UserId).RemoveValueAsync();
 
         yield return new WaitUntil(predicate: () => DBTask.IsCompleted);
 
@@ -489,12 +566,65 @@ public class AuthManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("new best score set at data base");
+            //prender sala ui
         }
-    }*/
-}
+    }
+   
+    public void LeaveButton()
+    {
+        StartCoroutine(Leave(number));
+    }
+    IEnumerator Leave(int number)
+    {
+        var DBTask = DBreference.Child("rooms").Child("room" + number).Child(User.UserId).RemoveValueAsync();
 
-public class UserData
+        yield return new WaitUntil(predicate: () => DBTask.IsCompleted);
+
+        if (DBTask.Exception != null)
+        {
+            Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
+        }
+        else
+        {
+            Debug.Log("out of queue");
+            //boton de salir apaga
+        }
+    }
+    public void NextButton()
+    {
+        StartCoroutine(Next());
+    }
+    IEnumerator Next()
+    {
+        var DBTask = DBreference.Child("rooms").GetValueAsync();
+
+        yield return new WaitUntil(predicate: () => DBTask.IsCompleted);
+
+        if (DBTask.Exception != null)
+        {
+            Debug.LogWarning(message: $"Failed to register task with {DBTask.Exception}");
+        }
+        else
+        {
+            Dictionary<string, Dictionary<string, object>> rooms_ = (Dictionary<string, Dictionary<string, object>>)DBTask.Result.Value;
+            for (int i = number; i <= 20; i++)
+            {
+                if (rooms_["room" + i].Count > 0)
+                {
+                    number = i;
+                    break;
+                }
+                if (i == 20)
+                {
+                    number = 0;
+                    break;
+                }
+            }
+            StartCoroutine(JointRoom(number));
+        }
+    }
+}
+    public class UserData
 {
     public string username;
     public int score;

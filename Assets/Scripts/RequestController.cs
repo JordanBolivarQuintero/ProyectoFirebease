@@ -11,7 +11,7 @@ public class RequestController : MonoBehaviour
     }
     IEnumerator DeleteRequest(string aID)
     {
-        var DBTask = AuthManager.DBreference.Child("users").Child(AuthManager.User.UserId).Child("requests").Child(aID).RemoveValueAsync();
+        var DBTask = AuthManager.DBreference.Child("users").Child(AuthManager.User.UserId).Child("request").Child(aID).RemoveValueAsync();
 
         yield return new WaitUntil(predicate: () => DBTask.IsCompleted);
 
@@ -30,7 +30,7 @@ public class RequestController : MonoBehaviour
     }
     IEnumerator addFriend(string aID, string name)
     {        
-        var DBTask1 = AuthManager.DBreference.Child("users").Child(AuthManager.User.UserId).Child("friends").Child(aID).SetValueAsync(name);
+        var DBTask1 = AuthManager.DBreference.Child("users").Child(AuthManager.User.UserId).Child("friends").Child(aID).SetValueAsync(name.ToString());
 
         yield return new WaitUntil(predicate: () => DBTask1.IsCompleted);
 
@@ -40,7 +40,7 @@ public class RequestController : MonoBehaviour
         }
         else
         {
-            var DBTask2 = AuthManager.DBreference.Child("users").Child(aID).Child("friends").Child(AuthManager.User.UserId).SetValueAsync(AuthManager.User.DisplayName);
+            var DBTask2 = AuthManager.DBreference.Child("users").Child(aID).Child("friends").Child(AuthManager.User.UserId).SetValueAsync(AuthManager.User.DisplayName.ToString());
             yield return new WaitUntil(predicate: () => DBTask2.IsCompleted);
 
             if (DBTask2.Exception != null)
