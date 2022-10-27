@@ -11,7 +11,7 @@ public class RequestController : MonoBehaviour
     }
     IEnumerator DeleteRequest(string aID)
     {
-        var DBTask = AuthManager.DBreference.Child("users").Child(AuthManager.User.UserId).Child("request").Child(aID).RemoveValueAsync();
+        var DBTask = AuthManager.DBreference.Child("users").Child(AuthManager.User.UserId).Child("requests").Child(aID).RemoveValueAsync();
 
         yield return new WaitUntil(predicate: () => DBTask.IsCompleted);
 
