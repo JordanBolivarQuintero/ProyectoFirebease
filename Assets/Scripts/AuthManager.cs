@@ -44,6 +44,10 @@ public class AuthManager : MonoBehaviour
     public GameObject online;
     public GameObject friend;
     public GameObject request;
+    //
+    public TMP_InputField RoomField;
+    public Transform roomUserParent;
+    public TMP_Text numberText;
 
     [Header("UserData")]
     [SerializeField] Transform texts;
@@ -72,7 +76,8 @@ public class AuthManager : MonoBehaviour
         {
             FirebaseDatabase.DefaultInstance.GetReference("onlineUsers").ValueChanged += LoadOnlineUser;
             FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/friends").ValueChanged += LoadFriends;
-            FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/request").ValueChanged += LoadRequest;           
+            FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/request").ValueChanged += LoadRequest;
+            FirebaseDatabase.DefaultInstance.GetReference("room" + number).ValueChanged += LoadRoom;
         }
     }
     private void OnDestroy()
@@ -82,6 +87,7 @@ public class AuthManager : MonoBehaviour
             FirebaseDatabase.DefaultInstance.GetReference("onlineUsers").ValueChanged -= LoadOnlineUser;
             FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/friends").ValueChanged -= LoadFriends;
             FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/request").ValueChanged -= LoadRequest;
+            FirebaseDatabase.DefaultInstance.GetReference("room" + number).ValueChanged -= LoadRoom;
         }
     }
     private void InitializeFirebase()
@@ -550,13 +556,23 @@ public class AuthManager : MonoBehaviour
     }
 
     //find friends
+    
     public void SerchButton()
     {
         StartCoroutine(JointRoom(number));
     }
+    public void JoinButton()
+    {
+        if (RoomField.text != null)
+        {
+            number = int.Parse(RoomField.text);
+        }
+        StartCoroutine(JointRoom(number));
+    }
     IEnumerator JointRoom(int number)
     {
-        var DBTask = DBreference.Child("rooms").Child("room" + number).Child(User.UserId).RemoveValueAsync();
+        numberText.text = number.ToString();    
+        var DBTask = DBreference.Child("rooms").Child("room" + number).Child(User.UserId).SetValueAsync(User.DisplayName);
 
         yield return new WaitUntil(predicate: () => DBTask.IsCompleted);
 
@@ -621,6 +637,55 @@ public class AuthManager : MonoBehaviour
                 }
             }
             StartCoroutine(JointRoom(number));
+        }
+    }
+    void LoadRoom(object sender, ValueChangedEventArgs args)
+    {
+        if (args.DatabaseError != null)
+        {
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+        else if (args.Snapshot.Value != null)
+        {
+            for (int i = 0; i < roomUserParent.childCount; i++)
+            {
+                Destroy(roomUserParent.GetChild(i).gameObject);
+            }
+
+            Dictionary<string, object> users = (Dictionary<string, object>)args.Snapshot.Value;
+
+            foreach (var item in users)
+            {
+                Debug.Log(item.Value + " is online");
+                if (item.Key == User.UserId)
+                {
+                    GameObject a = Instantiate(online, roomUserParent);
+                    a.transform.GetChild(0).gameObject.GetComponent<TMP_Text>().text = item.Value.ToString();
+                    a.transform.GetChild(1).gameObject.SetActive(false);
+                    a.name = item.Key.ToString();
+                }
+                else
+                {
+                    GameObject a = Instantiate(online, roomUserParent);
+                    for (int i = 0; i < friendsParent.childCount; i++)
+                    {
+                        if (friendsParent.GetChild(i).name == item.Key)
+                        {
+                            a.transform.GetChild(1).gameObject.SetActive(false);
+                        }
+                    }
+                    a.transform.GetChild(0).gameObject.GetComponent<TMP_Text>().text = item.Value.ToString();
+                    a.name = item.Key.ToString();
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < roomUserParent.childCount; i++)
+            {
+                Destroy(roomUserParent.GetChild(i).gameObject);
+            }
         }
     }
 }
