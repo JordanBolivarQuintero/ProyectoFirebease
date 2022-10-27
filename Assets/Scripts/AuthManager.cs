@@ -77,7 +77,7 @@ public class AuthManager : MonoBehaviour
             FirebaseDatabase.DefaultInstance.GetReference("onlineUsers").ValueChanged += LoadOnlineUser;
             FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/friends").ValueChanged += LoadFriends;
             FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/requests").ValueChanged += LoadRequest;
-            FirebaseDatabase.DefaultInstance.GetReference("room" + number).ValueChanged += LoadRoom;
+            FirebaseDatabase.DefaultInstance.GetReference("rooms/room" + number).ValueChanged += LoadRoom;
         }
     }
     private void OnDestroy()
@@ -87,7 +87,7 @@ public class AuthManager : MonoBehaviour
             FirebaseDatabase.DefaultInstance.GetReference("onlineUsers").ValueChanged -= LoadOnlineUser;
             FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/friends").ValueChanged -= LoadFriends;
             FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/requests").ValueChanged -= LoadRequest;
-            FirebaseDatabase.DefaultInstance.GetReference("room" + number).ValueChanged -= LoadRoom;
+            FirebaseDatabase.DefaultInstance.GetReference("rooms/room" + number).ValueChanged -= LoadRoom;
         }
     }
     private void InitializeFirebase()
@@ -563,6 +563,7 @@ public class AuthManager : MonoBehaviour
     }
     public void JoinButton()
     {
+        StartCoroutine(Leave(number));
         if (RoomField.text != null)
         {
             number = int.Parse(RoomField.text);
@@ -660,6 +661,7 @@ public class AuthManager : MonoBehaviour
                 Debug.Log(item.Value + " is online");
                 if (item.Key == User.UserId)
                 {
+                    Debug.Log("a");
                     GameObject a = Instantiate(online, roomUserParent);
                     a.transform.GetChild(0).gameObject.GetComponent<TMP_Text>().text = item.Value.ToString();
                     a.transform.GetChild(1).gameObject.SetActive(false);
@@ -674,7 +676,7 @@ public class AuthManager : MonoBehaviour
                         {
                             a.transform.GetChild(1).gameObject.SetActive(false);
                         }
-                    }
+                    } 
                     a.transform.GetChild(0).gameObject.GetComponent<TMP_Text>().text = item.Value.ToString();
                     a.name = item.Key.ToString();
                 }
