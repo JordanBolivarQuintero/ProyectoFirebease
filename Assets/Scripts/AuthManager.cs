@@ -76,7 +76,7 @@ public class AuthManager : MonoBehaviour
         {
             FirebaseDatabase.DefaultInstance.GetReference("onlineUsers").ValueChanged += LoadOnlineUser;
             FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/friends").ValueChanged += LoadFriends;
-            FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/request").ValueChanged += LoadRequest;
+            FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/requests").ValueChanged += LoadRequest;
             FirebaseDatabase.DefaultInstance.GetReference("room" + number).ValueChanged += LoadRoom;
         }
     }
@@ -86,7 +86,7 @@ public class AuthManager : MonoBehaviour
         {
             FirebaseDatabase.DefaultInstance.GetReference("onlineUsers").ValueChanged -= LoadOnlineUser;
             FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/friends").ValueChanged -= LoadFriends;
-            FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/request").ValueChanged -= LoadRequest;
+            FirebaseDatabase.DefaultInstance.GetReference("users/" + User.UserId + "/requests").ValueChanged -= LoadRequest;
             FirebaseDatabase.DefaultInstance.GetReference("room" + number).ValueChanged -= LoadRoom;
         }
     }
